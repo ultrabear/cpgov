@@ -10,8 +10,11 @@ import (
 
 const (
 	FATAL = "\033[91mFATAL:\033[0m "
+	// Read a maximum of 1024 bytes into memory at a time
+	MaxRead = 1024
 )
 
+// Error handling function, since all errors are exiting
 func handle(e error, cond bool, n ...interface{}) {
 	if e != nil || cond {
 		fmt.Print(FATAL)
@@ -20,6 +23,7 @@ func handle(e error, cond bool, n ...interface{}) {
 	}
 }
 
+// Filters dirs to only include cpu folders
 func filter(cpu []os.DirEntry) []os.DirEntry {
 	ns := cpu[:0]
 	for _, f := range cpu {
@@ -38,6 +42,7 @@ func filter(cpu []os.DirEntry) []os.DirEntry {
 	return ns
 }
 
+// List of *os.File, defined to allow closing all at once
 type OSFileList []*os.File
 
 func (o OSFileList) Close() {
@@ -46,6 +51,8 @@ func (o OSFileList) Close() {
 	}
 }
 
+// Gets all the cpu scaling files in the given filemode with flag
+// Exits program on error
 func getCPUfiles(flag int) OSFileList {
 
 	cpus, e := os.ReadDir("/sys/devices/system/cpu/")
@@ -64,6 +71,9 @@ func getCPUfiles(flag int) OSFileList {
 	return OSFileList(files)
 }
 
+// Grabs current governor that all cpus are running
+// While its designed for a single governor, it supports multi governor printing anyways
+// This tool is meant to be simple to use, for a more complex user, coding their own script is a good idea
 func getCurrentGov() string {
 
 	files := getCPUfiles(os.O_RDONLY)
@@ -72,12 +82,15 @@ func getCurrentGov() string {
 	govs := map[string]struct{}{}
 
 	for _, f := range files {
-		mxb := make([]byte, 1024)
-		i, e := f.Read(mxb)
+		mxb := [MaxRead]byte{}
+		i, e := f.Read(mxb[:])
 		handle(e, false, "Could not read from governor file")
 		govs[string(mxb[:i])] = struct{}{}
 	}
 
+	// If len >1 then strconcat and return it as a prettyprinted slice
+	// if len == 1 then return the single string
+	// if len = 0 return nil string, this shouldent be possible normally
 	if len(govs) > 1 {
 		s := make([]string, 0, len(govs))
 		for k := range govs {
@@ -92,6 +105,7 @@ func getCurrentGov() string {
 	}
 }
 
+// Grabs valid governors from the cpu blocks
 func getValidGovs() []string {
 
 	cpus, e := os.ReadDir("/sys/devices/system/cpu/")
@@ -111,8 +125,8 @@ func getValidGovs() []string {
 	vgovs := map[string]struct{}{}
 
 	for _, f := range files {
-		rb := make([]byte, 1024)
-		n, re := f.Read(rb)
+		rb := [1024]byte{}
+		n, re := f.Read(rb[:])
 		handle(re, false, "Could not read from governor file")
 		for _, v := range strings.Split(strings.Replace(string(rb[:n]), "\n", "", -1), " ") {
 			if len(v) > 0 {
@@ -129,6 +143,7 @@ func getValidGovs() []string {
 	return rstr
 }
 
+// Validates governor input as valid, and handles user input
 func validateGovs() string {
 
 	valid := getValidGovs()
@@ -147,6 +162,7 @@ func validateGovs() string {
 		os.Exit(0)
 	}
 
+	// Ensure valid governor
 	_, ok := validset[os.Args[1]]
 
 	handle(nil, !ok, "Not valid gov, Valid: ", valid)
@@ -154,6 +170,7 @@ func validateGovs() string {
 	return os.Args[1]
 }
 
+// Main function, grabs governor and writes it to files
 func main() {
 
 	governor := validateGovs()
