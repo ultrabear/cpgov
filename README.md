@@ -1,6 +1,8 @@
 # cpgov
-A simple cli cpu governor control tool
-
+A simple cli cpu governor control tool  
+## Notice
+This was made as a replacement for a bash script that did the same job, it is not a professional program by any means  
+I placed this on my github as a convenience
 # Installation
 Normal install  
 Usage: `sudo cpgov` recommended for multi user installs
