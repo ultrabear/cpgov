@@ -2,12 +2,12 @@
 A simple cli cpu governor control tool
 
 # Installation
-Normal install
+Normal install  
 Usage: `sudo cpgov` recommended for multi user installs
 ```bash
 sudo make install
 ```
-Setuid install
+Setuid install  
 Usage: `cpgov` not recommended for multi user installs
 ```bash
 sudo make install-setuid
