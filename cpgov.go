@@ -125,7 +125,7 @@ func getValidGovs() []string {
 	vgovs := map[string]struct{}{}
 
 	for _, f := range files {
-		rb := [1024]byte{}
+		rb := [MaxRead]byte{}
 		n, re := f.Read(rb[:])
 		handle(re, false, "Could not read from governor file")
 		for _, v := range strings.Split(strings.Replace(string(rb[:n]), "\n", "", -1), " ") {
