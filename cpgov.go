@@ -34,7 +34,7 @@ func filter(cpu []os.DirEntry) []os.DirEntry {
 		}
 	}
 
-	// GC hint
+	// GC rest of direntries
 	for i := len(ns); i < len(cpu); i++ {
 		cpu[i] = nil
 	}
@@ -64,7 +64,7 @@ func getCPUfiles(flag int) OSFileList {
 	files := make([]*os.File, 0, len(cpus))
 	for _, f := range cpus {
 		fd, e := os.OpenFile("/sys/devices/system/cpu/"+f.Name()+"/cpufreq/scaling_governor", flag, 0311)
-		handle(e, false, "Could not open gov for "+f.Name())
+		handle(e, false, "Could not open gov for", f.Name())
 		files = append(files, fd)
 	}
 
@@ -118,10 +118,11 @@ func getValidGovs() []string {
 	for _, f := range cpus {
 		fd, e := os.OpenFile("/sys/devices/system/cpu/"+f.Name()+"/cpufreq/scaling_available_governors", os.O_RDONLY, 0311)
 		defer fd.Close()
-		handle(e, false, "Could not open gov for "+f.Name())
+		handle(e, false, "Could not open gov for", f.Name())
 		files = append(files, fd)
 	}
 
+	// Compiled to map instead of slice to squash repeat values
 	vgovs := map[string]struct{}{}
 
 	for _, f := range files {
@@ -180,6 +181,6 @@ func main() {
 
 	for _, f := range files {
 		_, we := f.Write([]byte(governor))
-		handle(we, false, "Could not write to governor file")
+		handle(we, false, "Could not write to governor file:", f.Name())
 	}
 }
