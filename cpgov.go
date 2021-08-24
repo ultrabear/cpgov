@@ -1,11 +1,11 @@
 package main
 
 import (
-	"os"
 	"fmt"
+	"os"
+	"sort"
 	"strconv"
 	"strings"
-	"sort"
 )
 
 const (
@@ -56,8 +56,8 @@ func getCPUfiles(flag int) OSFileList {
 
 	files := make([]*os.File, 0, len(cpus))
 	for _, f := range cpus {
-		fd, e := os.OpenFile("/sys/devices/system/cpu/" + f.Name() + "/cpufreq/scaling_governor", flag, 0311)
-		handle(e, false, "Could not open gov for " + f.Name())
+		fd, e := os.OpenFile("/sys/devices/system/cpu/"+f.Name()+"/cpufreq/scaling_governor", flag, 0311)
+		handle(e, false, "Could not open gov for "+f.Name())
 		files = append(files, fd)
 	}
 
@@ -80,12 +80,12 @@ func getCurrentGov() string {
 
 	if len(govs) > 1 {
 		s := make([]string, 0, len(govs))
-		for k, _ := range govs {
+		for k := range govs {
 			s = append(s, strings.TrimSuffix(k, "\n"))
 		}
 		return fmt.Sprint(s)
 	} else {
-		for k, _ := range govs {
+		for k := range govs {
 			return strings.TrimSuffix(k, "\n")
 		}
 		return ""
@@ -102,9 +102,9 @@ func getValidGovs() []string {
 
 	files := make([]*os.File, 0, len(cpus))
 	for _, f := range cpus {
-		fd, e := os.OpenFile("/sys/devices/system/cpu/" + f.Name() + "/cpufreq/scaling_available_governors", os.O_RDONLY, 0311)
+		fd, e := os.OpenFile("/sys/devices/system/cpu/"+f.Name()+"/cpufreq/scaling_available_governors", os.O_RDONLY, 0311)
 		defer fd.Close()
-		handle(e, false, "Could not open gov for " + f.Name())
+		handle(e, false, "Could not open gov for "+f.Name())
 		files = append(files, fd)
 	}
 
@@ -122,7 +122,7 @@ func getValidGovs() []string {
 	}
 
 	rstr := make([]string, 0, len(vgovs))
-	for k, _ := range vgovs {
+	for k := range vgovs {
 		rstr = append(rstr, k)
 	}
 
