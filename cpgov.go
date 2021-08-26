@@ -166,7 +166,7 @@ func validateGovs() string {
 	// Ensure valid governor
 	_, ok := validset[os.Args[1]]
 
-	handle(nil, !ok, "Not valid gov, Valid: ", valid)
+	handle(nil, !ok, "Not valid gov, Valid:", valid)
 
 	return os.Args[1]
 }
