@@ -1,3 +1,4 @@
+// CPu GOVernor control utility
 package main
 
 import (
@@ -9,8 +10,9 @@ import (
 )
 
 const (
+	// FATAL is a placeholder string that color highlights the contents
 	FATAL = "\033[91mFATAL:\033[0m "
-	// Read a maximum of 1024 bytes into memory at a time
+	// MaxRead 1024 bytes into memory at a time
 	MaxRead = 1024
 )
 
@@ -42,12 +44,15 @@ func filter(cpu []os.DirEntry) []os.DirEntry {
 	return ns
 }
 
-// List of *os.File, defined to allow closing all at once
+// OSFileList is a list of *os.File, defined to allow closing all at once
 type OSFileList []*os.File
 
+// Close closes all files in the list
 func (o OSFileList) Close() {
 	for _, f := range o {
-		f.Close()
+		if err := f.Close(); err != nil {
+			fmt.Println("Non Fatal Error closing file: %v: %v", f.Name, err)
+		}
 	}
 }
 
@@ -64,7 +69,7 @@ func getCPUfiles(flag int) OSFileList {
 	files := make([]*os.File, 0, len(cpus))
 	for _, f := range cpus {
 		fd, e := os.OpenFile("/sys/devices/system/cpu/"+f.Name()+"/cpufreq/scaling_governor", flag, 0311)
-		handle(e, false, "Could not open gov for", f.Name())
+		handle(e, false, "Could not open gov for", f.Name(), "(are you running as root?)")
 		files = append(files, fd)
 	}
 
@@ -97,12 +102,12 @@ func getCurrentGov() string {
 			s = append(s, strings.TrimSuffix(k, "\n"))
 		}
 		return fmt.Sprint(s)
-	} else {
-		for k := range govs {
-			return strings.TrimSuffix(k, "\n")
-		}
-		return ""
 	}
+	for k := range govs {
+		return strings.TrimSuffix(k, "\n")
+	}
+	return ""
+
 }
 
 // Grabs valid governors from the cpu blocks
@@ -117,8 +122,8 @@ func getValidGovs() []string {
 	files := make([]*os.File, 0, len(cpus))
 	for _, f := range cpus {
 		fd, e := os.OpenFile("/sys/devices/system/cpu/"+f.Name()+"/cpufreq/scaling_available_governors", os.O_RDONLY, 0311)
+		handle(e, false, "Could not open gov for", f.Name(), "(are you running as root?)")
 		defer fd.Close()
-		handle(e, false, "Could not open gov for", f.Name())
 		files = append(files, fd)
 	}
 
